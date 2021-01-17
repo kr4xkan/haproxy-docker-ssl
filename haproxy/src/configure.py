@@ -14,9 +14,13 @@ FRONTEND_MODE = os.environ.get('FRONTEND_MODE', os.environ.get('BACKENDS_MODE','
 BACKEND_NAME = os.environ.get('BACKEND_NAME', 'http-backend')
 BALANCE = os.environ.get('BALANCE', 'roundrobin')
 SERVICE_NAMES = os.environ.get('SERVICE_NAMES', '')
+USE_SSL = (os.environ.get('USE_SSL', 'false').lower() == "true")
+USE_LETSENCRYPT = (os.environ.get('USE_LETSENCRYPT', 'false').lower() == "true")
+LETSENCRYPT_URL = os.environ.get('LETSENCRYPT_URL', 'google.com')
 COOKIES_ENABLED = (os.environ.get('COOKIES_ENABLED', 'false').lower() == "true")
 COOKIES_PARAMS = os.environ.get('COOKIES_PARAMS','')
 PROXY_PROTOCOL_ENABLED = (os.environ.get('PROXY_PROTOCOL_ENABLED', 'false').lower() == "true")
+ENABLE_STATS = (os.environ.get('ENABLE_STATS', 'false').lower() == "true")
 STATS_PORT = os.environ.get('STATS_PORT', '1936')
 STATS_AUTH = os.environ.get('STATS_AUTH', 'admin:admin')
 BACKENDS = os.environ.get('BACKENDS', '').split(' ')
@@ -44,7 +48,27 @@ listen_conf = Template("""
     stats auth $auth
 """)
 
-frontend_conf = Template("""
+if USE_SSL:
+    if USE_LETSENCRYPT:
+        frontend_conf = Template("""
+  frontend $name
+    bind *:$port $accept_proxy
+    bind *:443 ssl crt /etc/ssl/key.pem
+    mode $mode
+    default_backend $backend
+    acl lets_encrypt-acl path_beg /.well-known/acme-challenge/
+    use_backend lets_encrypt if lets_encrypt-acl
+""")
+    else:
+        frontend_conf = Template("""
+  frontend $name
+    bind *:$port $accept_proxy
+    bind *:443 ssl crt /etc/ssl/key.pem
+    mode $mode
+    default_backend $backend
+""")
+else:
+    frontend_conf = Template("""
   frontend $name
     bind *:$port $accept_proxy
     mode $mode
@@ -86,6 +110,11 @@ backend_type_http = Template("""
 
 backend_conf_plus = Template("""
     server $name-$index $host:$port $cookies check
+""")
+
+ssl_backend_conf = Template("""
+backend lets_encrypt
+  server letscencrypt $letsencrypturl
 """)
 
 health_conf = """
@@ -229,11 +258,12 @@ with open("/etc/haproxy/haproxy.cfg", "w") as configuration:
 
         configuration.write(conf)
 
-    configuration.write(
-        listen_conf.substitute(
-            port=STATS_PORT, auth=STATS_AUTH
+    if ENABLE_STATS:
+        configuration.write(
+            listen_conf.substitute(
+                port=STATS_PORT, auth=STATS_AUTH
+            )
         )
-    )
 
     configuration.write(
         frontend_conf.substitute(
@@ -246,4 +276,9 @@ with open("/etc/haproxy/haproxy.cfg", "w") as configuration:
     )
 
     configuration.write(backend_conf)
+    configuration.write(
+        ssl_backend_conf.substitute(
+            letsencrypturl=LETSENCRYPT_URL
+        )
+    )
     configuration.write(health_conf)

@@ -12,7 +12,6 @@ if ! test -e /etc/haproxy/haproxy.cfg; then
       echo "*/${DNS_TTL:-1} * * * * /track_dns  | logger " > /var/crontab.txt
     
     else
-    
       if [ ! -z "$BACKENDS" ]; then
         # Backend provided via $BACKENDS env
         python3 /configure.py env
@@ -36,6 +35,9 @@ if ! test -e /etc/haproxy/haproxy.cfg; then
     if [ ! -z "$BACKENDS_MODE" ]; then echo "export BACKENDS_MODE=\"$BACKENDS_MODE\""  >> /etc/environment; fi
     if [ ! -z "$BACKEND_NAME" ]; then echo "export BACKEND_NAME=\"$BACKEND_NAME\""  >> /etc/environment; fi
     if [ ! -z "$BALANCE" ]; then echo "export BALANCE=\"$BALANCE\""  >> /etc/environment; fi
+    if [ ! -z "$USE_SSL" ]; then echo "export USE_SSL=\"$USE_SSL\""  >> /etc/environment; fi
+    if [ ! -z "$USE_LETSENCRYPT" ]; then echo "export USE_LETSENCRYPT=\"$USE_LETSENCRYPT\""  >> /etc/environment; fi
+    if [ ! -z "$LETSENCRYPT_URL" ]; then echo "export LETSENCRYPT_URL=\"$LETSENCRYPT_URL\""  >> /etc/environment; fi
     if [ ! -z "$COOKIES_ENABLED" ]; then echo "export COOKIES_ENABLED=\"$COOKIES_ENABLED\""  >> /etc/environment; fi
     if [ ! -z "$COOKIES_PARAMS" ]; then echo "export COOKIES_PARAMS=\"$COOKIES_PARAMS\""  >> /etc/environment; fi
     if [ ! -z "$DOWN_INTER" ]; then echo "export DOWN_INTER=\"$DOWN_INTER\""  >> /etc/environment; fi
@@ -51,6 +53,7 @@ if ! test -e /etc/haproxy/haproxy.cfg; then
     if [ ! -z "$PROXY_PROTOCOL_ENABLED" ]; then echo "export PROXY_PROTOCOL_ENABLED=\"$PROXY_PROTOCOL_ENABLED\""  >> /etc/environment; fi
     if [ ! -z "$RISE" ]; then echo "export RISE=\"$RISE\""  >> /etc/environment; fi
     if [ ! -z "$SERVICE_NAMES" ]; then echo "export SERVICE_NAMES=\"$SERVICE_NAMES\""  >> /etc/environment; fi
+    if [ ! -z "$ENABLE_STATS" ]; then echo "export ENABLE_STATS=\"$ENABLE_STATS\""  >> /etc/environment; fi
     if [ ! -z "$STATS_AUTH" ]; then echo "export STATS_AUTH=\"$STATS_AUTH\""  >> /etc/environment; fi
     if [ ! -z "$STATS_PORT" ]; then echo "export STATS_PORT=\"$STATS_PORT\""  >> /etc/environment; fi
     if [ ! -z "$TIMEOUT_CLIENT" ]; then echo "export TIMEOUT_CLIENT=\"$TIMEOUT_CLIENT\""  >> /etc/environment; fi
